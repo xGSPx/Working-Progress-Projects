@@ -1,196 +1,82 @@
--- Glitterz Ui Lib
-local Glitterz = {}
-Glitterz.__index = Glitterz
+-- =================================================================================================
+-- |                                                                                               |
+-- |                        Glitch UI Lib (V2 - Modular) - By Gemini                               |
+-- |                                                                                               |
+-- =================================================================================================
+-- [ LIBRARY START ]
 
--- Services
-local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
-local LocalPlayer = Players.LocalPlayer
+local Glitch = {}
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
--- Theme presets
-local Themes = {
-    Dark = {
-        Bg = Color3.fromRGB(20, 20, 24),
-        Panel = Color3.fromRGB(26, 26, 32),
-        Accent = Color3.fromRGB(148, 93, 214),
-        Text = Color3.fromRGB(230, 230, 235),
-        MutedText = Color3.fromRGB(170, 170, 175),
-        Divider = Color3.fromRGB(40, 40, 48),
-        Button = Color3.fromRGB(35, 35, 42),
-        ButtonHover = Color3.fromRGB(45, 45, 56),
-        ToggleOn = Color3.fromRGB(93, 214, 148),
-        ToggleOff = Color3.fromRGB(90, 90, 96),
-        Input = Color3.fromRGB(30, 30, 36),
-        Dropdown = Color3.fromRGB(30, 30, 36),
-        Danger = Color3.fromRGB(214, 93, 93)
-    }
+-- // THEME //
+local Theme = {
+    Background = Color3.fromRGB(30, 30, 40),
+    Primary = Color3.fromRGB(45, 45, 55),
+    Secondary = Color3.fromRGB(60, 60, 70),
+    Accent = Color3.fromRGB(120, 80, 220),
+    AccentDark = Color3.fromRGB(90, 60, 180),
+    Text = Color3.fromRGB(240, 240, 240),
+    Red = Color3.fromRGB(220, 50, 50),
+    Green = Color3.fromRGB(50, 220, 50)
 }
 
--- Utility
-local function create(class, props, children)
-    local inst = Instance.new(class)
-    for k, v in pairs(props or {}) do inst[k] = v end
-    for _, child in ipairs(children or {}) do child.Parent = inst end
-    return inst
-end
+-- // UTILITY //
+local function Create(inst, props) local i=Instance.new(inst); for p,v in pairs(props or {}) do i[p]=v end; return i end
 
-local function makeDraggable(frame, dragHandle)
-    dragHandle = dragHandle or frame
-    local dragging, dragStart, startPos = false
-    dragHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
-        end
-    end)
-    UIS.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            frame.Position = UDim2.fromOffset(startPos.X.Offset + delta.X, startPos.Y.Offset + delta.Y)
-        end
-    end)
-end
+--==================================================================================================
+--[[                                      MAIN LIBRARY OBJECTS                                    ]]
+--==================================================================================================
 
-local function applyGlitchEffect(label)
-    local originalText, originalPos, originalColor = label.Text, label.Position, label.TextColor3
-    local running, chars = false, {"#", "%", "@", "?", "!", "$", "&", "*", "~"}
-    label.MouseEnter:Connect(function()
-        if running then return end
-        running = true
-        task.spawn(function()
-            for i = 1, 12 do
-                label.Position = originalPos + UDim2.fromOffset(math.random(-3,3), math.random(-2,2))
-                label.TextColor3 = Color3.fromRGB(math.random(120,255), math.random(120,255), math.random(120,255))
-                if math.random() > 0.6 then
-                    local randChar = chars[math.random(1,#chars)]
-                    local cut = math.random(1,#originalText)
-                    label.Text = string.sub(originalText,1,cut)..randChar..string.sub(originalText,cut+1)
-                else
-                    label.Text = originalText
-                end
-                task.wait(0.04)
-            end
-            label.Position, label.TextColor3, label.Text = originalPos, originalColor, originalText
-            running = false
-        end)
-    end)
-end
+function Glitch:CreateWindow(config)
+    if getgenv().GlitchUI then pcall(function() getgenv().GlitchUI:Destroy() end) end
 
-function Glitterz:CreateWindow(config)
-    config = config or {}
-    local theme = Themes.Dark
-    local screenGui = create("ScreenGui", {
-        Name = "GlitterzUiLib",
-        ResetOnSpawn = false,
-        ZIndexBehavior = Enum.ZIndexBehavior.Global
-    })
-    if syn and syn.protect_gui then syn.protect_gui(screenGui) end
-    screenGui.Parent = LocalPlayer:FindFirstChildOfClass("PlayerGui") or game:GetService("CoreGui")
+    local screenGui = Create("ScreenGui", { Name="GlitchUI", Parent=game:GetService("CoreGui"), ResetOnSpawn=false, ZIndexBehavior=Enum.ZIndexBehavior.Global })
+    getgenv().GlitchUI = screenGui
 
-    local window = create("Frame", {
-        Size = UDim2.fromOffset(config.Width or 600, config.Height or 380),
-        Position = UDim2.fromOffset(120, 120),
-        BackgroundColor3 = theme.Bg,
-        BorderSizePixel = 0
-    }, {screenGui})
-    create("UICorner", {CornerRadius = UDim.new(0, 10)}, {Parent = window})
+    local mainFrame = Create("Frame", { Name="MainFrame", Parent=screenGui, Size=UDim2.new(0,500,0,400), Position=UDim2.fromScale(0.5,0.5), AnchorPoint=Vector2.new(0.5,0.5), BackgroundColor3=Theme.Background, BorderSizePixel=0 })
+    local titleBar = Create("Frame", { Name="TitleBar", Parent=mainFrame, Size=UDim2.new(1,0,0,35), BackgroundColor3=Theme.Primary, BorderSizePixel=0 })
+    local titleLabel = Create("TextLabel", { Name="Title", Parent=titleBar, Size=UDim2.new(1,-10,1,0), Position=UDim2.fromOffset(10,0), Font=Enum.Font.SourceSansBold, Text="Glitch UI | ".. (config.Name or ""), TextSize=18, TextColor3=Theme.Text, TextXAlignment=Enum.TextXAlignment.Left, BackgroundTransparency=1 })
+    local tabsContainer = Create("Frame", { Name="TabsContainer", Parent=mainFrame, Position=UDim2.fromOffset(0,35), Size=UDim2.new(1,0,0,35), BackgroundColor3=Theme.Primary, BorderSizePixel=0 })
+    Create("UIListLayout", { Parent=tabsContainer, FillDirection=Enum.FillDirection.Horizontal, Padding=UDim.new(0,5) })
+    Create("UIPadding", { Parent=tabsContainer, PaddingLeft=UDim.new(0,5) })
+    local contentContainer = Create("Frame", { Name="ContentContainer", Parent=mainFrame, Position=UDim2.fromOffset(0,70), Size=UDim2.new(1,0,1,-70), BackgroundTransparency=1, ClipsDescendants=true })
+    
+    local dragging,dragStart,startPos=false; titleBar.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging,dragStart,startPos=true,i.Position,mainFrame.Position; i.Changed:Connect(function() if i.UserInputState==Enum.UserInputState.End then dragging=false end end) end end); RunService.RenderStepped:Connect(function() if dragging then mainFrame.Position=UDim2.new(0,startPos.X.Offset+(UserInputService:GetMouseLocation().X-dragStart.X),0,startPos.Y.Offset+(UserInputService:GetMouseLocation().Y-dragStart.Y)) end end)
+    
+    local Window = {}
+    local TabsObject = {}
+    local tabList = {}
+    local activeTab = nil
 
-    local titleBar = create("Frame", {
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = theme.Panel,
-        BorderSizePixel = 0
-    }, {window})
-    create("UICorner", {CornerRadius = UDim.new(0, 10)}, {Parent = titleBar})
+    Window.Frame = mainFrame
+    Window.Name = config.Name
+    Window.Tabs = TabsObject
 
-    local titleLabel = create("TextLabel", {
-        Size = UDim2.new(1, -140, 1, 0),
-        Position = UDim2.fromOffset(12, 0),
-        BackgroundTransparency = 1,
-        Text = config.Name or "Glitterz Interface",
-        Font = Enum.Font.GothamSemibold,
-        TextSize = 16,
-        TextColor3 = theme.Text,
-        TextXAlignment = Enum.TextXAlignment.Left
-    }, {titleBar})
-    if config.GlitchHover then applyGlitchEffect(titleLabel) end
+    function TabsObject:Create(name)
+        local tabContent = Create("ScrollingFrame", { Name=name, Parent=contentContainer, Size=UDim2.fromScale(1,1), BackgroundColor3=Theme.Background, BorderSizePixel=0, Visible=false, ScrollBarThickness=4, ScrollBarImageColor3=Theme.Accent })
+        local listLayout = Create("UIListLayout", { Parent=tabContent, Padding=UDim.new(0,5), HorizontalAlignment=Enum.HorizontalAlignment.Center })
+        Create("UIPadding", { Parent=tabContent, PaddingTop=UDim.new(0,10), PaddingLeft=UDim.new(0,10), PaddingRight=UDim.new(0,10) })
+        listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() tabContent.CanvasSize=UDim2.fromOffset(0,listLayout.AbsoluteContentSize.Y) end)
+        
+        local tabButton = Create("TextButton", { Name=name.."_Button", Parent=tabsContainer, Size=UDim2.new(0,100,1,-10), Position=UDim2.fromScale(0,0.5), AnchorPoint=Vector2.new(0,0.5), Text=name, Font=Enum.Font.SourceSansSemibold, TextSize=16, TextColor3=Theme.Text, BackgroundColor3=Theme.Secondary, BorderSizePixel=0 })
 
-    local tabHolder = create("Frame", {
-        Position = UDim2.fromOffset(0, 40),
-        Size = UDim2.new(0, 120, 1, -40),
-        BackgroundColor3 = theme.Panel,
-        BorderSizePixel = 0
-    }, {window})
+        local Tab = {}
+        function Tab:CreateSection(text) Create("TextLabel", { Parent=tabContent, Size=UDim2.new(1,0,0,25), Font=Enum.Font.SourceSansBold, Text=text, TextColor3=Theme.Accent, TextSize=14, BackgroundTransparency=1, TextXAlignment=Enum.TextXAlignment.Center }) end
+        function Tab:CreateLabel(config) Create("TextLabel", { Parent=tabContent, Size=UDim2.new(1,0,0,20), Font=Enum.Font.SourceSans, Text=config.Text, TextColor3=Theme.Text, TextSize=14, BackgroundTransparency=1, TextXAlignment=Enum.TextXAlignment.Left }) end
+        function Tab:CreateButton(config) local b=Create("TextButton",{ Parent=tabContent, Size=UDim2.new(1,0,0,35), BackgroundColor3=Theme.Primary, Text=config.Name, TextColor3=Theme.Text, Font=Enum.Font.SourceSansBold, TextSize=16 }); b.MouseButton1Click:Connect(config.Callback); return b end
+        function Tab:CreateToggle(config) local v=config.CurrentValue or false; local t=Create("TextButton",{ Parent=tabContent, Size=UDim2.new(1,0,0,35), BackgroundColor3=v and Theme.Accent or Theme.Red, Text=config.Name, TextColor3=Theme.Text, Font=Enum.Font.SourceSansSemibold, TextSize=16 }); local T={Value=v}; function T:SetValue(nV) v=nV; T.Value=v; t.BackgroundColor3=v and Theme.Accent or Theme.Red; if config.Callback then config.Callback(v) end end; t.MouseButton1Click:Connect(function() T:SetValue(not v) end); return T end
+        function Tab:CreateSlider(config) local v=config.CurrentValue or config.Min; local f=Create("Frame",{ Parent=tabContent, Size=UDim2.new(1,0,0,40), BackgroundTransparency=1 }); local t=Create("TextLabel",{ Parent=f, Size=UDim2.new(1,0,0,20), Font=Enum.Font.SourceSans, Text=config.Name, TextColor3=Theme.Text, TextSize=14, BackgroundTransparency=1, TextXAlignment=Enum.TextXAlignment.Left }); local vL=Create("TextLabel",{ Parent=t, Size=UDim2.fromScale(1,1), Font=Enum.Font.SourceSansSemibold, Text=tostring(v), TextColor3=Theme.Accent, TextSize=14, BackgroundTransparency=1, TextXAlignment=Enum.TextXAlignment.Right }); local b=Create("Frame",{ Parent=f, Position=UDim2.new(0,0,0,20), Size=UDim2.new(1,0,0,20), BackgroundColor3=Theme.Primary, BorderSizePixel=0 }); local fR=Create("Frame",{ Parent=b, Size=UDim2.fromScale((v-config.Min)/(config.Max-config.Min),1), BackgroundColor3=Theme.Accent, BorderSizePixel=0 }); local S={Value=v}; function S:Update(i) local p=math.clamp((i.Position.X-b.AbsolutePosition.X)/b.AbsoluteSize.X,0,1); local rV=config.Min+p*(config.Max-config.Min); v=math.floor(rV/(config.Precision or 1)+0.5)*(config.Precision or 1); S.Value=v; fR.Size=UDim2.fromScale(p,1); vL.Text=tostring(v); if config.Callback then config.Callback(v) end end; b.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then S:Update(i); local c; c=UserInputService.InputChanged:Connect(function(iC) if iC.UserInputType==Enum.UserInputType.MouseMovement then S:Update(iC) else c:Disconnect() end end) end end); return S end
+        function Tab:CreateDropdown(config) local v=config.CurrentOption or "None"; local o=config.Options or {"None"}; local op=false; local dF=Create("Frame",{ Parent=tabContent, Size=UDim2.new(1,0,0,35), BackgroundTransparency=1, ZIndex=2 }); local mB=Create("TextButton",{ Parent=dF, Size=UDim2.fromScale(1,1), BackgroundColor3=Theme.Primary, Text=v, TextColor3=Theme.Text, Font=Enum.Font.SourceSansSemibold, TextSize=16 }); local oF=Create("ScrollingFrame",{ Parent=screenGui, BackgroundColor3=Theme.Secondary, BorderSizePixel=0, Visible=false, ZIndex=100}); Create("UIListLayout",{ Parent=oF, Padding=UDim.new(0,2)}); local D={Value=v}; function D:SetOptions(nO) for _,c in ipairs(oF:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end; o=nO; for _,opt in ipairs(o) do local b=Create("TextButton",{ Parent=oF, Size=UDim2.new(1,0,0,30), BackgroundColor3=Theme.Primary, Text=opt, TextColor3=Theme.Text, Font=Enum.Font.SourceSans, TextSize=14 }); b.MouseButton1Click:Connect(function() v=opt; D.Value=v; mB.Text=v; op=false; oF.Visible=false; if config.Callback then config.Callback(v) end end) end end; mB.MouseButton1Click:Connect(function() op=not op; oF.Visible=op; oF.Size=UDim2.new(0,mB.AbsoluteSize.X,0,120); oF.Position=UDim2.fromOffset(mB.AbsolutePosition.X, mB.AbsolutePosition.Y+mB.AbsoluteSize.Y) end); D:SetOptions(o); return D end
 
-    local contentHolder = create("Frame", {
-        Position = UDim2.new(0, 120, 0, 40),
-        Size = UDim2.new(1, -120, 1, -40),
-        BackgroundColor3 = theme.Panel,
-        BorderSizePixel = 0
-    }, {window})
-
-    local tabButtons = {}
-    local function createTab(name)
-        local tabFrame = create("Frame", {
-            Name = name,
-            Size = UDim2.new(1, 0, 1, 0),
-            BackgroundTransparency = 1,
-            Visible = false
-        }, {contentHolder})
-
-        local layout = create("UIListLayout", {
-            Padding = UDim.new(0, 8),
-            SortOrder = Enum.SortOrder.LayoutOrder
-        }, {tabFrame})
-
-        local tabButton = create("TextButton", {
-            Text = name,
-            Size = UDim2.new(1, 0, 0, 32),
-            BackgroundColor3 = theme.Button,
-            Font = Enum.Font.Gotham,
-            TextSize = 14,
-            TextColor3 = theme.Text
-        }, {tabHolder})
-        create("UICorner", {CornerRadius = UDim.new(0, 6)}, {Parent = tabButton})
-        if config.GlitchHover then applyGlitchEffect(tabButton) end
-
-        tabButton.MouseButton1Click:Connect(function()
-            for _, btn in pairs(tabButtons) do btn.Frame.Visible = false end
-            tabFrame.Visible = true
-        end)
-
-        table.insert(tabButtons, {Button = tabButton, Frame = tabFrame})
-
-        return {
-            AddButton = function(data)
-                local btn = create("TextButton", {
-                    Text = data.Text,
-                    Size = UDim2.new(1, -20, 0, 32),
-                    BackgroundColor3 = theme.Button,
-                    Font = Enum.Font.Gotham,
-                    TextSize = 14,
-                    TextColor3 = theme.Text,
-                    Parent = tabFrame
-                })
-                create("UICorner", {CornerRadius = UDim.new(0, 6)}, {Parent = btn})
-                if config.GlitchHover then applyGlitchEffect(btn) end
-                btn.MouseButton1Click:Connect(function()
-                    if data.Callback then data.Callback() end
-                end)
-            end
-        }
+        table.insert(tabList, {Button=tabButton, Content=tabContent, Object=Tab})
+        
+        tabButton.MouseButton1Click:Connect(function() for _,t in ipairs(tabList) do t.Content.Visible=false; t.Button.BackgroundColor3=Theme.Secondary end; tabContent.Visible=true; tabButton.BackgroundColor3=Theme.AccentDark; activeTab=Tab end)
+        if not activeTab then tabButton:MouseButton1Click() end
+        return Tab
     end
-
-    makeDraggable(window, titleBar)
-
-    return {
-        CreateTab = createTab,
-        Destroy = function() screenGui:Destroy() end,
-        _config = config
-    }
+    
+    return Window
 end
 
-return Glitterz
+return Glitch
